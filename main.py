@@ -21,8 +21,8 @@ async def on_ready():
 async def hi(interaction: Interaction):
     await interaction.response.send_message(f"hi {interaction.user.name}")
 
-@client.slash_command(name = "join", description = "", guild_ids = GUILD_IDS)
-async def join(interaction: Interaction, name: str = SlashOption(description = "the name of your nation")):
+@client.slash_command(name = "join", description = "Join the game", guild_ids = GUILD_IDS)
+async def join(interaction: Interaction, name: str = SlashOption(description = "The name of your nation. This can always be changed later.")):
     col = db["users"]
     col.insert_one({
         "_id": interaction.user.id,
