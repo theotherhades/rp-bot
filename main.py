@@ -9,7 +9,7 @@ GUILD_IDS = list()
 for guild in client.guilds:
     GUILD_IDS.append(guild.id)
 
-@client.extra_event
+@client.event
 async def on_ready():
     print("Bot is online")
 
