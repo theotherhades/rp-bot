@@ -15,6 +15,6 @@ async def on_ready():
 
 @client.slash_command(name = "hi", description = "says hi", guild_ids = GUILD_IDS)
 async def hi(interaction: Interaction):
-    interaction.response.send_message(f"hi {interaction.user.name}")
+    await interaction.response.send_message(f"hi {interaction.user.name}")
 
 client.run(os.environ["CLIENT_TOKEN"])
