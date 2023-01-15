@@ -22,7 +22,7 @@ async def hi(interaction: Interaction):
     await interaction.response.send_message(f"hi {interaction.user.name}")
 
 @client.slash_command(name = "join", description = "", guild_ids = GUILD_IDS)
-async def join(interaction: Interaction, name: str = SlashOption(description = "the name of your nation.")):
+async def join(interaction: Interaction, name: str = SlashOption(description = "the name of your nation")):
     col = db["users"]
     col.insert_one({
         "_id": interaction.user.id,
