@@ -62,12 +62,13 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         nonlocal msg
         button_geninfo.disabled = True
         button_resources.disabled = False
+        button_military.disabled = False
         embed = nextcord.Embed(title = "General info", color = nextcord.Color.og_blurple())
         embed.set_author(name = data["name"].title())
 
-        embed.add_field(name = "Treasury", value = f"${data['treasury']}")
-        embed.add_field(name = "Population", value = f"${data['population']}")
-        embed.add_field(name = "Stability", value = f"${data['stability']}")
+        embed.add_field(name = "Treasury", value = f"${data['treasury']:,}", inline = False)
+        embed.add_field(name = "Population", value = f"{data['population']:,}", inline = False)
+        embed.add_field(name = "Stability", value = f"{data['stability']}", inline = False)
 
         await msg.edit(embed = embed, view = view)
 
@@ -75,17 +76,39 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         nonlocal msg
         button_resources.disabled = True
         button_geninfo.disabled = False
+        button_military.disabled = False
         embed = nextcord.Embed(title = "Resources")
         embed.set_author(name = data["name"].title())
+
+        embed.add_field(name = "🪨 Steel", value = f"{data['resources']['steel']:,}", inline = False)
+        embed.add_field(name = "🛢️ Oil", value = f"{data['resources']['oil']:,}", inline = False)
+        embed.add_field(name = "🪵 Wood", value = f"{data['resources']['wood']:,}", inline = False)
+        embed.add_field(name = "💎 Precious Metals", value = f"{data['resources']['precious_metals']:,}", inline = False)
+
+        await msg.edit(embed = embed, view = view)
+
+    async def setpage_military(interaction):
+        nonlocal msg
+        button_military.disabled = True
+        button_geninfo.disabled = False
+        button_resources.disabled = False
+        embed = nextcord.Embed(title = "Military", color = nextcord.Color.brand_green())
+        embed.set_author(name = data["name"].title())
+
+        embed.add_field(name = "Trrops", value = f"{data['military']['troops']:,}", inline = False)
+        embed.add_field(name = "Cavalry", value = f"{data['military']['cavalry']:,}", inline = False)
+        embed.add_field(name = "Artillery", value = f"{data['military']['artillery']:,}", inline = False)
+        embed.add_field(name = "Boats", value = f"{data['military']['boats']:,}", inline = False)
+        embed.add_field(name = "Aircraft", value = f"{data['military']['aircraft']:,}", inline = False)
 
         await msg.edit(embed = embed, view = view)
 
     embed = nextcord.Embed(title = "General info", color = nextcord.Color.og_blurple())
     embed.set_author(name = data["name"].title())
 
-    embed.add_field(name = "Treasury", value = f"${data['treasury']}")
-    embed.add_field(name = "Population", value = f"{data['population']}")
-    embed.add_field(name = "Stability", value = f"{data['stability']}")
+    embed.add_field(name = "Treasury", value = f"${data['treasury']:,}", inline = False)
+    embed.add_field(name = "Population", value = f"{data['population']:,}", inline = False)
+    embed.add_field(name = "Stability", value = f"{data['stability']}", inline = False)
 
     view = nextcord.ui.View(timeout = 180)
 
@@ -98,6 +121,11 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
     button_resources = nextcord.ui.Button(emoji = "⛏️", style = nextcord.ButtonStyle.blurple, disabled = False)
     button_resources.callback = setpage_resources
     view.add_item(button_resources)
+
+    # Military button
+    button_military = nextcord.ui.Button(emoji = "🪖", style = nextcord.ButtonStyle.blurple, disabled = False)
+    button_military.callback = setpage_military
+    view.add_item(button_military)
 
     msg = await interaction.response.send_message(embed = embed, view = view)
 
