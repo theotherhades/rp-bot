@@ -113,17 +113,17 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
     view = nextcord.ui.View(timeout = 180)
 
     # General info button
-    button_geninfo = nextcord.ui.Button(emoji = "📔", style = nextcord.ButtonStyle.blurple, disabled = True)
+    button_geninfo = nextcord.ui.Button(emoji = "📔", style = nextcord.ButtonStyle.gray, disabled = True)
     button_geninfo.callback = setpage_geninfo
     view.add_item(button_geninfo)
 
     # Resources button
-    button_resources = nextcord.ui.Button(emoji = "⛏️", style = nextcord.ButtonStyle.blurple, disabled = False)
+    button_resources = nextcord.ui.Button(emoji = "⛏️", style = nextcord.ButtonStyle.gray, disabled = False)
     button_resources.callback = setpage_resources
     view.add_item(button_resources)
 
     # Military button
-    button_military = nextcord.ui.Button(emoji = "🪖", style = nextcord.ButtonStyle.blurple, disabled = False)
+    button_military = nextcord.ui.Button(emoji = "🪖", style = nextcord.ButtonStyle.gray, disabled = False)
     button_military.callback = setpage_military
     view.add_item(button_military)
 
