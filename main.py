@@ -64,7 +64,7 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         button_resources.disabled = False
         button_military.disabled = False
         embed = nextcord.Embed(title = "General info", color = nextcord.Color.og_blurple())
-        embed.set_author(name = data["name"].title())
+        embed.set_author(name = data["name"].title(), icon_url = user.avatar.url)
 
         embed.add_field(name = "Treasury", value = f"${data['treasury']:,}", inline = False)
         embed.add_field(name = "Population", value = f"{data['population']:,}", inline = False)
@@ -78,7 +78,7 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         button_geninfo.disabled = False
         button_military.disabled = False
         embed = nextcord.Embed(title = "Resources")
-        embed.set_author(name = data["name"].title())
+        embed.set_author(name = data["name"].title(), icon_url = user.avatar.url)
 
         embed.add_field(name = "🪨 Steel", value = f"{data['resources']['steel']:,}", inline = False)
         embed.add_field(name = "🛢️ Oil", value = f"{data['resources']['oil']:,}", inline = False)
@@ -93,9 +93,9 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         button_geninfo.disabled = False
         button_resources.disabled = False
         embed = nextcord.Embed(title = "Military", color = nextcord.Color.brand_green())
-        embed.set_author(name = data["name"].title())
+        embed.set_author(name = data["name"].title(), icon_url = user.avatar.url)
 
-        embed.add_field(name = "Trrops", value = f"{data['military']['troops']:,}", inline = False)
+        embed.add_field(name = "Troops", value = f"{data['military']['troops']:,}", inline = False)
         embed.add_field(name = "Cavalry", value = f"{data['military']['cavalry']:,}", inline = False)
         embed.add_field(name = "Artillery", value = f"{data['military']['artillery']:,}", inline = False)
         embed.add_field(name = "Boats", value = f"{data['military']['boats']:,}", inline = False)
@@ -104,7 +104,7 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         await msg.edit(embed = embed, view = view)
 
     embed = nextcord.Embed(title = "General info", color = nextcord.Color.og_blurple())
-    embed.set_author(name = data["name"].title())
+    embed.set_author(name = data["name"].title(), icon_url = user.avatar.url)
 
     embed.add_field(name = "Treasury", value = f"${data['treasury']:,}", inline = False)
     embed.add_field(name = "Population", value = f"{data['population']:,}", inline = False)
@@ -129,13 +129,47 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
 
     msg = await interaction.response.send_message(embed = embed, view = view)
 
-@client.slash_command(name = "test_profile", description = "test", guild_ids = GUILD_IDS)
-async def test_profile(interaction: Interaction):
-    view = nextcord.ui.View(timeout = 180)
-    button = nextcord.ui.Button(emoji = "📔", style = nextcord.ButtonStyle.blurple)
-    view.add_item(button)
-    embed = nextcord.Embed(title = "click the button", description = "do it")
-    await interaction.response.send_message(embed = embed, view = view)
+@client.slash_command(name = "addmoney", description = "admin only", guild_ids = GUILD_IDS)
+async def addmoney(interaction: Interaction, user: nextcord.User, amount: int):
+    if interaction.user.id not in [
+        655803366294683659, # Missourian
+        687774746414546945 # me
+    ]:
+        await interaction.response.send_message(embed = nextcord.Embed(title = ":x: No perms?", description = "You don't have perms to do that!", color = nextcord.Color.red()), ephemeral = True)
+    else:
+        col = db["users"]
+        data = col.find_one({"_id": user.id})
+        col.update_one({"_id": user.id}, {"$set": {"treasury": data["treasury"] + amount}})
+        await interaction.response.send_message(embed = nextcord.Embed(title = ":white_check_mark: Success!", description = f"Added **${amount}** to {data['name'].title()}'s balance.", color = nextcord.Color.green()), ephemeral = True)
+
+@client.slash_command(name = "shop", description = "View shop items", guild_ids = GUILD_IDS)
+async def shop(interaction: Interaction):
+    col = db["shop"]
+    shopitems = col.find_one({"_id": "shopitems"})
+    embed = nextcord.Embed(title = "Shop", description = "You can purchase items with the `/buyitem` command.", color = nextcord.Color.blurple())
+    for item in shopitems:
+        if item != "_id":
+            embed.add_field(name = item.title(), value = f"**Cost:** ${shopitems[item]['cost']}\n**Description:** {shopitems[item]['description']}")
+    
+    await interaction.response.send_message(embed = embed)
+
+"""
+@client.slash_command(name = "buyitem", description = "Purchase an item from the shop", guild_ids = GUILD_IDS)
+async def buyitem(interaction: Interaction):
+    # Finish and tidy up
+    col = db["shop"]
+    shopitems = col.find_one({"_id": "shopitems"})
+    del shopitems["_id"]
+    user = interaction.user
+
+    async def dropdown_callback(interaction):
+        usercol = db["users"]
+        data = usercol.find_one({"_id": user.id})
+        usercol.update_one({"_id": user.id}, {"$set": {"treasury": }})
+
+    dropdown_items = [nextcord.SelectOption(label = item.title(), value = item, description = shopitems[item]["description"]) for item in shopitems.keys()]
+    dropdown = nextcord.ui.Select(placeholder = "Item to buy", options = dropdown_items, max_values = 1)
+"""
 
 # do something like this for money later https://stackoverflow.com/questions/63625246/discord-py-bot-run-function-at-specific-time-every-day
 
