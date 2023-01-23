@@ -1,8 +1,11 @@
 import os
+#import pytz
 import nextcord
+#import threading
 from nextcord import Interaction, SlashOption
 from nextcord.ext import commands
 from pymongo import MongoClient
+from datetime import datetime
 
 client = commands.Bot()
 
@@ -12,6 +15,32 @@ db = cluster["test"]
 GUILD_IDS = list()
 for guild in client.guilds:
     GUILD_IDS.append(guild.id)
+
+"""
+def daily():
+    threading.Timer(10, daily).start()
+
+    now = datetime.now(pytz.utc)
+    now = now.strftime("%H:%M:%S")
+
+    if now == ""
+"""
+
+async def item_postpurchase(user, item: str, amount: int):
+    """
+    Do any extra tasks after an item has been purchased if needed, for example add troops to military balance (not just inv)
+    """
+    military_items = [
+        "troops",
+        "cavalry",
+        "artillery",
+        "boats",
+        "aircraft"
+    ]
+    if item in military_items:
+        newmil = db["users"].find_one({"_id": user.id})["military"]
+        newmil[item] += amount
+        db["users"].update_one({"_id": user.id}, {"$set": {"military": newmil}})
 
 @client.event
 async def on_ready():
@@ -140,7 +169,7 @@ async def addmoney(interaction: Interaction, user: nextcord.User, amount: int):
         col = db["users"]
         data = col.find_one({"_id": user.id})
         col.update_one({"_id": user.id}, {"$set": {"treasury": data["treasury"] + amount}})
-        await interaction.response.send_message(embed = nextcord.Embed(title = ":white_check_mark: Success!", description = f"Added **${amount}** to {data['name'].title()}'s balance.", color = nextcord.Color.green()), ephemeral = True)
+        await interaction.response.send_message(embed = nextcord.Embed(title = ":white_check_mark: Success!", description = f"Added **${amount:,}** to {data['name'].title()}'s balance.", color = nextcord.Color.green()), ephemeral = True)
 
 @client.slash_command(name = "shop", description = "View shop items", guild_ids = GUILD_IDS)
 async def shop(interaction: Interaction):
@@ -153,23 +182,30 @@ async def shop(interaction: Interaction):
     
     await interaction.response.send_message(embed = embed)
 
-"""
 @client.slash_command(name = "buyitem", description = "Purchase an item from the shop", guild_ids = GUILD_IDS)
-async def buyitem(interaction: Interaction):
-    # Finish and tidy up
-    col = db["shop"]
-    shopitems = col.find_one({"_id": "shopitems"})
+async def buyitem(interaction: Interaction, item = SlashOption(
+    name = "item",
+    choices = {
+        k.title(): k for k in db["shop"].find_one({"_id": "shopitems"}) if k != "_id"
+    }
+), amount: int = 1):
+    shopitems = db["shop"].find_one({"_id": "shopitems"})
     del shopitems["_id"]
-    user = interaction.user
+    userdata = db["users"].find_one({"_id": interaction.user.id})
 
-    async def dropdown_callback(interaction):
-        usercol = db["users"]
-        data = usercol.find_one({"_id": user.id})
-        usercol.update_one({"_id": user.id}, {"$set": {"treasury": }})
+    if userdata["treasury"] >= shopitems[item]["cost"] * amount:
+        newinv = userdata["inv"]
+        if item not in newinv.keys():
+            newinv[item] = amount
+        else:
+            newinv[item] += amount
+        db["users"].update_one({"_id": interaction.user.id}, {"$set": {"treasury": userdata["treasury"] - shopitems[item]["cost"] * amount, "inv": newinv}})
+        await item_postpurchase(interaction.user, item, amount)
+        embed = nextcord.Embed(title = ":white_check_mark: Success!", description = f"You've purchased {amount:,} {item.title() + 's' if item.endswith('s') == False else item.title()} for **${(shopitems[item]['cost'] * amount):,}**. Your treasury now has **${db['users'].find_one({'_id': interaction.user.id})['treasury']:,}**.", color = nextcord.Color.green())
+    else:
+        embed = nextcord.Embed(title = ":x: Not enough money!", description = f"Your treasury doesn't have enough money to fulfil this purchase! You have **${userdata['treasury']:,}** but the purchase requires **${(shopitems[item]['cost'] * amount):,}**", color = nextcord.Color.red())
 
-    dropdown_items = [nextcord.SelectOption(label = item.title(), value = item, description = shopitems[item]["description"]) for item in shopitems.keys()]
-    dropdown = nextcord.ui.Select(placeholder = "Item to buy", options = dropdown_items, max_values = 1)
-"""
+    await interaction.response.send_message(embed = embed)
 
 # do something like this for money later https://stackoverflow.com/questions/63625246/discord-py-bot-run-function-at-specific-time-every-day
 
