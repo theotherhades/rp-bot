@@ -1,11 +1,10 @@
 import os
-#import pytz
+import asyncio
 import nextcord
-#import threading
+import datetime
 from nextcord import Interaction, SlashOption
 from nextcord.ext import commands
 from pymongo import MongoClient
-from datetime import datetime
 
 client = commands.Bot()
 
@@ -15,16 +14,6 @@ db = cluster["test"]
 GUILD_IDS = list()
 for guild in client.guilds:
     GUILD_IDS.append(guild.id)
-
-"""
-def daily():
-    threading.Timer(10, daily).start()
-
-    now = datetime.now(pytz.utc)
-    now = now.strftime("%H:%M:%S")
-
-    if now == ""
-"""
 
 async def item_postpurchase(user, item: str, amount: int):
     """
@@ -41,10 +30,6 @@ async def item_postpurchase(user, item: str, amount: int):
         newmil = db["users"].find_one({"_id": user.id})["military"]
         newmil[item] += amount
         db["users"].update_one({"_id": user.id}, {"$set": {"military": newmil}})
-
-@client.event
-async def on_ready():
-    print("Bot is online")
 
 @client.slash_command(name = "hi", description = "says hi", guild_ids = GUILD_IDS)
 async def hi(interaction: Interaction):
@@ -208,5 +193,20 @@ async def buyitem(interaction: Interaction, item = SlashOption(
     await interaction.response.send_message(embed = embed)
 
 # do something like this for money later https://stackoverflow.com/questions/63625246/discord-py-bot-run-function-at-specific-time-every-day
+async def daily():
+    while True:
+        now = datetime.datetime.now()
+        then = now + datetime.timedelta(days = 1)
+        wait = (then - now).total_seconds()
+        await asyncio.sleep(wait)
+
+        channel = client.get_channel(1065744269719113738)
+
+        await channel.send(embed = nextcord.Embed(title = "Testing daily messages", description = "later this will say when you get daily money"))
+
+@client.event
+async def on_ready():
+    print("Bot is online")
+    await daily()
 
 client.run(os.environ["CLIENT_TOKEN"])
