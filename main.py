@@ -1,4 +1,5 @@
 import os
+import time
 import asyncio
 import nextcord
 import datetime
@@ -198,11 +199,24 @@ async def daily():
         now = datetime.datetime.now()
         then = now + datetime.timedelta(days = 1)
         wait = (then - now).total_seconds()
-        await asyncio.sleep(wait)
+
+        # Calculate income and population growth
+        for user in db["users"].find():
+            tax = user["population"] * user["tax_per_person"]
+            income = tax
+
+            military_upkeep = (user["military"]["troops"] * 1) + (user["military"]["cavalry"] * 12) + (user["military"]["artillery"] * 50) + (user["military"]["boats"] * 1500) + (user["military"]["aircraft"] * 800)
+            administration = 1 * user["population"]
+            expenses = military_upkeep + administration
+
+            #newpop = 
+
+            db["users"].update_one({"_id": user["_id"]}, {"$set": {"treasury": user["treasury"] + (income - expenses)}})
 
         channel = client.get_channel(1065744269719113738)
+        await channel.send("<@687774746414546945>", embed = nextcord.Embed(title = "Daily income/population growth", description = f"Next daily <t:{int(time.mktime(then.timetuple()))}:R>"))
 
-        await channel.send(embed = nextcord.Embed(title = "Testing daily messages", description = "later this will say when you get daily money"))
+        await asyncio.sleep(wait)
 
 @client.event
 async def on_ready():
