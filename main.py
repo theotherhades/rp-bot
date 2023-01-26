@@ -202,6 +202,8 @@ async def daily():
 
         # Calculate income and population growth
         for user in db["users"].find():
+            if user["_id"] == "placeholder":
+                continue
             tax = user["population"] * user["tax_per_person"]
             income = tax
 
@@ -214,7 +216,7 @@ async def daily():
             db["users"].update_one({"_id": user["_id"]}, {"$set": {"treasury": user["treasury"] + (income - expenses)}})
 
         channel = client.get_channel(1065744269719113738)
-        await channel.send("<@687774746414546945>", embed = nextcord.Embed(title = "Daily income/population growth", description = f"Next daily <t:{int(time.mktime(then.timetuple()))}:R>"))
+        await channel.send("<@1042541126512545792>", embed = nextcord.Embed(title = "Daily income/population growth", description = f"Next daily <t:{int(time.mktime(then.timetuple()))}:R>"))
 
         await asyncio.sleep(wait)
 
