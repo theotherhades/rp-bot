@@ -1,4 +1,4 @@
-import os
+import tokens
 import time
 import asyncio
 import random
@@ -10,7 +10,7 @@ from pymongo import MongoClient
 
 client = commands.Bot()
 
-cluster = MongoClient(os.environ["DB_URL"])
+cluster = MongoClient(tokens.db_url)
 db = cluster["test"]
 
 GUILD_IDS = list()
@@ -30,10 +30,16 @@ async def item_postpurchase(user, item: str, amount: int):
     """
     military_items = [
         "troops",
-        "cavalry",
+        "tanks",
         "artillery",
-        "boats",
-        "aircraft"
+        "frigates",
+        "destroyers",
+        "cruisers",
+        "submarines",
+        "aircraft_carriers",
+        "fighter_aircraft",
+        "bomber_aircraft",
+        "attack_aircraft"
     ]
     if item in military_items:
         newmil = db["users"].find_one({"_id": user.id})["military"]
@@ -60,13 +66,7 @@ async def join(interaction: Interaction, name: str = SlashOption(description = "
                 "wood": 0,
                 "precious_metals": 0
             },
-            "military": {
-                "troops": 0,
-                "cavalry": 0,
-                "artillery": 0,
-                "boats": 0,
-                "aircraft": 0
-            }
+            "military": {"troops": 0, "tanks": 0, "artillery": 0, "frigates": 0, "destroyers": 0, "cruisers": 0, "submarines": 0, "aircraft_carriers": 0, "fighter_aircraft": 0, "bomber_aircraft": 0, "attack_aircraft": 0}
         })
         embed = nextcord.Embed(title = "Success!", description = f"You've successfully joined the game as **{name}**!", color = nextcord.Color.green())
     else:
@@ -123,11 +123,22 @@ async def profile(interaction: Interaction, user: nextcord.User = None):
         embed = nextcord.Embed(title = "Military", color = nextcord.Color.brand_green())
         embed.set_author(name = data["name"].title(), icon_url = user.avatar.url)
 
+        """
         embed.add_field(name = "Troops", value = f"{data['military']['troops']:,}", inline = False)
-        embed.add_field(name = "Cavalry", value = f"{data['military']['cavalry']:,}", inline = False)
+        embed.add_field(name = "Tanks", value = f"{data['military']['tanks']:,}", inline = False)
         embed.add_field(name = "Artillery", value = f"{data['military']['artillery']:,}", inline = False)
-        embed.add_field(name = "Boats", value = f"{data['military']['boats']:,}", inline = False)
-        embed.add_field(name = "Aircraft", value = f"{data['military']['aircraft']:,}", inline = False)
+        embed.add_field(name = "⚓ Frigates", value = f"{data['military']['frigates']:,}", inline = True)
+        embed.add_field(name = "⚓ Destroyers", value = f"{data['military']['destroyers']:,}", inline = False)
+        embed.add_field(name = "⚓ Cruisers", value = f"{data['military']['cruisers']:,}", inline = False)
+        embed.add_field(name = "⚓ Submarines", value = f"{data['military']['submarines']:,}", inline = False)
+        embed.add_field(name = "🛩️ Fighters", value = f"{data['military']['fighter_aircraft']:,}", inline = True)
+        embed.add_field(name = "🛩️ Bombers", value = f"{data['military']['bomber_aircraft']:,}", inline = False)
+        embed.add_field(name = "🛩️ Attack Aircraft", value = f"{data['military']['attack_aircraft']:,}", inline = False)
+        """
+        # Add one field each for army, navy and air force instead of one field per military unit
+        embed.add_field(name = "🪖 Army", value = f"Troops: {data['military']['troops']:,}\nTanks: {data['military']['tanks']:,}\nArtillery: {data['military']['artillery']:,}", inline = False)
+        embed.add_field(name = "⚓ Navy", value = f"Frigates: {data['military']['frigates']:,}\nDestroyers: {data['military']['destroyers']:,}\nCruisers: {data['military']['cruisers']:,}\nSubmarines: {data['military']['submarines']:,}\nAircraft Carriers: {data['military']['aircraft_carriers']:,}", inline = False)
+        embed.add_field(name = "🛩️ Air Force", value = f"Fighters: {data['military']['fighter_aircraft']:,}\nBombers: {data['military']['bomber_aircraft']:,}\nAttack Aircraft: {data['military']['attack_aircraft']:,}", inline = False)
 
         await msg.edit(embed = embed, view = view)
         await logmsg(f"Updated page in profile embed to military\nProfile ID: `{user.id}`", "profile.setpage_military")
@@ -204,7 +215,7 @@ async def lb(interaction: Interaction, sortby = SlashOption(
                 val = user["population"]
             case "military":
                 val = 0
-                for k, v in db["military"]:
+                for k, v in user["military"].items():
                     val += v
 
         userlist[user["name"]] = val
@@ -256,7 +267,7 @@ async def daily(interaction: Interaction, user: nextcord.User = None):
     embed = nextcord.Embed(title = "Daily", color = nextcord.Color.blue())
     embed.set_author(name = data["name"].title(), icon_url = user.avatar.url)
     embed.add_field(name = "💵 Economy", value = f"Income: ${data['lastdaily']['income']:,}\nExpenses: ${data['lastdaily']['expenses']:,}\n**Growth: ${data['lastdaily']['income'] - data['lastdaily']['expenses']:,}**", inline = False)
-    embed.add_field(name = "👤 Population", value = f"Growth: +{data['lastdaily']['popgrowth']} **({data['population']})**", inline = False)
+    embed.add_field(name = "👤 Population", value = f"Growth: +{data['lastdaily']['popgrowth']:,} **({data['population']:,})**", inline = False)
 
     await interaction.response.send_message(embed = embed)
 
@@ -381,7 +392,7 @@ async def daily():
             income = tax
             income += random.randint(tax // 2, tax * 2)
 
-            military_upkeep = (user["military"]["troops"] * 1) + (user["military"]["cavalry"] * 12) + (user["military"]["artillery"] * 50) + (user["military"]["boats"] * 1500) + (user["military"]["aircraft"] * 800)
+            military_upkeep = (user["military"]["troops"] * 3) + (user["military"]["tanks"] * 1400) + (user["military"]["artillery"] * 150) + (user["military"]["frigates"] * 3300) + (user["military"]["destroyers"] * 6000) + (user["military"]["cruisers"] * 12000) + (user["military"]["submarines"] * 4500) + (user["military"]["fighter_aircraft"] * 600) + (user["military"]["bomber_aircraft"] * 1200) + (user["military"]["attack_aircraft"] * 800)
             administration = random.randint(1, 10) * user["population"]
             expenses = military_upkeep + administration
 
@@ -414,4 +425,4 @@ async def on_ready():
 async def on_error(error):
     await logmsg(f":x: ERROR: {str(error)}", "on_command_error")
 
-client.run(os.environ["CLIENT_TOKEN"])
+client.run(tokens.client_token)
